@@ -37,14 +37,32 @@ namespace ConsoleApp4
                     process.Arguments = argumenter();
                     process.UseShellExecute = false;
                     process.CreateNoWindow = true;
+                    process.ErrorDialog = true;
+                    process.RedirectStandardError = true;
 
                     Process.Start(process).WaitForExit();
+
+                };
+
+                // 縮小専用を実行
+                Action<string> shukusen_start = (directory) =>
+                {
+                    Directory.GetFiles(directory)
+                        .AsParallel()
+                        .ForAll(file =>
+                        {
+                            // 縮小専用を実行
+                            process_start(Path.Combine(work, @"..\..\..\..\Tools\Shukusen\ShukuSen.exe"), () => $"\"{file}\"");
+
+                            // 元ﾌｧｲﾙ削除
+                            File.Delete(file);
+                        });
                 };
 
                 // 圧縮ﾌｧｲﾙ→ﾌｫﾙﾀﾞ
                 target = Execute(target,
                     (file) => File.Exists(file),
-                    (file) => process_start("7za.exe", () => $"x -y -r -aoa \"{file}\" -o\"{to_directory(file)}"),
+                    (file) => process_start("7za.exe", () => $"x -y -r -aoa \"{file}\" -o\"{to_directory(file)}\""),
                     (file) => file
                 );
 
@@ -55,6 +73,24 @@ namespace ConsoleApp4
                     (file) => File.Exists(file),
                     (file) => File.Delete(file),
                     (file) => to_directory(file)
+                );
+
+                Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
+
+                // ﾌｧｲﾙ内整形
+                target = Execute(target,
+                    (file) => Directory.Exists(file),
+                    (file) => process_start(Path.Combine(work, @"..\..\..\ConsoleApp2\bin\Debug\Arrangay.exe"), () => $"\"{file}\""),
+                    (file) => file
+                );
+
+                Console.WriteLine($"* ﾌｧｲﾙ内の画像を縮小します");
+
+                // 縮小専用
+                target = Execute(target,
+                    (file) => Directory.Exists(file),
+                    (file) => shukusen_start(file),
+                    (file) => file
                 );
 
                 Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
@@ -133,6 +169,14 @@ namespace ConsoleApp4
 
             info.GetDirectories().AsParallel()
                 .ForAll(child => DeleteAttributes(child));
+        }
+
+        private void ShukuSen(string directory)
+        {
+            foreach (var file in Directory.GetFiles(directory))
+            {
+
+            }
         }
     }
 }
