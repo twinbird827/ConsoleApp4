@@ -195,7 +195,7 @@ namespace ConsoleApp4
                     // 縮小後ﾌｧｲﾙ名を作成
                     var dst = Path.Combine(
                         Path.GetDirectoryName(src),
-                        $"s_{Path.GetFileNameWithoutExtension(src)}.jpg")
+                        $"s-{Path.GetFileNameWithoutExtension(src)}.jpg")
                     ;
 
                     if ((new FileInfo(dst)).Length == 0)
