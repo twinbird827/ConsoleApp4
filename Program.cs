@@ -10,117 +10,333 @@ namespace ConsoleApp4
 {
     class Program
     {
+        private const string ShukusenPath = @"..\Shukusen\ShukuSen.exe";
+
+        private const string ArrangayPath = @"..\Arrangay\Arrangay.exe";
+
+        private const string SevenZaPath = @"7za.exe";
+
         static void Main(string[] args)
         {
             // 作業ﾃﾞｨﾚｸﾄﾘを取得
             var work = System.AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
 
-            foreach (var arg in args)
+            // ｵﾌﾟｼｮﾝ
+            var isExeShukusen = true;
+
+            // ｵﾌﾟｼｮﾝを選択
+            Console.WriteLine("起動ｵﾌﾟｼｮﾝを選択してください。");
+            Console.WriteLine("0: 全て実行する。(ﾃﾞﾌｫﾙﾄ)");
+            Console.WriteLine("1: 画像縮小をｽｷｯﾌﾟする。");
+
+            // ｵﾌﾟｼｮﾝ読取&判定
+            if (!CheckOptions(Console.ReadLine(), ref isExeShukusen))
             {
-                var target = arg;
-
-                Console.WriteLine($"* 解凍処理を開始します");
-
-                // ﾌｧｲﾙ名→ﾌｫﾙﾀﾞ名変更ﾃﾞﾘｹﾞｰﾄ
-                Func<string, string> to_directory = (file) => Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file).Trim(' ', '　', '.'));
-
-                // ﾌﾟﾛｾｽ実行ﾃﾞﾘｹﾞｰﾄ
-                Action<string, Func<string>> process_start = (file, argumenter) =>
-                {
-                    Console.WriteLine($"work: {work}");
-                    Console.WriteLine($"exe : {file}");
-                    Console.WriteLine($"arg : {argumenter()}");
-                    var process = new ProcessStartInfo();
-
-                    process.WorkingDirectory = work;
-                    process.FileName = file;
-                    process.Arguments = argumenter();
-                    process.UseShellExecute = false;
-                    process.CreateNoWindow = true;
-                    process.ErrorDialog = true;
-                    process.RedirectStandardError = true;
-
-                    Process.Start(process).WaitForExit();
-
-                };
-
-                // 縮小専用を実行
-                Action<string> shukusen_start = (directory) =>
-                {
-                    Directory.GetFiles(directory)
-                        .AsParallel()
-                        .ForAll(file =>
-                        {
-                            // 縮小専用を実行
-                            process_start(Path.Combine(work, @"..\..\..\..\Tools\Shukusen\ShukuSen.exe"), () => $"\"{file}\"");
-
-                            // 元ﾌｧｲﾙ削除
-                            File.Delete(file);
-                        });
-                };
-
-                // 圧縮ﾌｧｲﾙ→ﾌｫﾙﾀﾞ
-                target = Execute(target,
-                    (file) => File.Exists(file),
-                    (file) => process_start("7za.exe", () => $"x -y -r -aoa \"{file}\" -o\"{to_directory(file)}\""),
-                    (file) => file
-                );
-
-                Console.WriteLine($"* 解凍したﾌｧｲﾙを削除します");
-
-                // 元のﾌｧｲﾙを削除
-                target = Execute(target,
-                    (file) => File.Exists(file),
-                    (file) => File.Delete(file),
-                    (file) => to_directory(file)
-                );
-
-                Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
-
-                // ﾌｧｲﾙ内整形
-                target = Execute(target,
-                    (file) => Directory.Exists(file),
-                    (file) => process_start(Path.Combine(work, @"..\..\..\ConsoleApp2\bin\Debug\Arrangay.exe"), () => $"\"{file}\""),
-                    (file) => file
-                );
-
-                Console.WriteLine($"* ﾌｧｲﾙ内の画像を縮小します");
-
-                // 縮小専用
-                target = Execute(target,
-                    (file) => Directory.Exists(file),
-                    (file) => shukusen_start(file),
-                    (file) => file
-                );
-
-                Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
-
-                // ﾌｧｲﾙ内整形
-                target = Execute(target,
-                    (file) => Directory.Exists(file),
-                    (file) => process_start(Path.Combine(work, @"..\..\..\ConsoleApp2\bin\Debug\Arrangay.exe"), () => $"\"{file}\""),
-                    (file) => file
-                );
-
-                Console.WriteLine($"* 圧縮処理を開始します");
-
-                // ﾌｫﾙﾀﾞ→圧縮ﾌｧｲﾙ
-                target = Execute(target,
-                    (file) => Directory.Exists(file),
-                    (file) => process_start(@"7za.exe", () => $"a -mmt=on -y -r \"{file}.zip\"  \"{file}\""),
-                    (file) => file
-                );
-
-                Console.WriteLine($"* 解凍したﾌｫﾙﾀﾞを削除します");
-
-                // 解凍したﾌｫﾙﾀﾞを削除
-                target = Execute(target,
-                    (file) => Directory.Exists(file),
-                    (file) => DeleteDirectory(file),
-                    (file) => file
-                );
-
+                return;
             }
+
+            try
+            {
+                // 実行ﾊﾟﾗﾒｰﾀに対して処理実行
+                args.AsParallel()
+                    .ForAll(arg => Execute(work, arg, isExeShukusen));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                Console.ReadLine();
+            }
+
+            //foreach (var arg in args)
+            //{
+            //    var target = arg;
+
+            //    Console.WriteLine($"* 解凍処理を開始します");
+
+            //    // ﾌｧｲﾙ名→ﾌｫﾙﾀﾞ名変更ﾃﾞﾘｹﾞｰﾄ
+            //    Func<string, string> to_directory = (file) => Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file).Trim(' ', '　', '.'));
+
+            //    // ﾌﾟﾛｾｽ実行ﾃﾞﾘｹﾞｰﾄ
+            //    Action<string, Func<string>> process_start = (file, argumenter) =>
+            //    {
+            //        Console.WriteLine($"work: {work}");
+            //        Console.WriteLine($"exe : {file}");
+            //        Console.WriteLine($"arg : {argumenter()}");
+
+            //        var process = new ProcessStartInfo();
+
+            //        process.WorkingDirectory = work;
+            //        process.FileName = file;
+            //        process.Arguments = argumenter();
+            //        process.UseShellExecute = false;
+            //        process.CreateNoWindow = true;
+            //        process.ErrorDialog = true;
+            //        process.RedirectStandardError = true;
+
+            //        Process.Start(process).WaitForExit();
+
+            //    };
+
+            //    // 縮小専用を実行
+            //    Action<string> shukusen_start = (directory) =>
+            //    {
+            //        Directory.GetFiles(directory)
+            //            .AsParallel()
+            //            .ForAll(file =>
+            //            {
+            //                // 縮小専用を実行
+            //                process_start(Path.Combine(work, ShukusenPath), () => $"\"{file}\"");
+
+            //                // 元ﾌｧｲﾙ削除
+            //                File.Delete(file);
+            //            });
+            //    };
+
+            //    // 圧縮ﾌｧｲﾙ→ﾌｫﾙﾀﾞ
+            //    target = Execute(target,
+            //        (file) => File.Exists(file),
+            //        (file) => process_start("7za.exe", () => $"x -y -r -aoa \"{file}\" -o\"{to_directory(file)}\""),
+            //        (file) => file
+            //    );
+
+            //    Console.WriteLine($"* 解凍したﾌｧｲﾙを削除します");
+
+            //    // 元のﾌｧｲﾙを削除
+            //    target = Execute(target,
+            //        (file) => File.Exists(file),
+            //        (file) => File.Delete(file),
+            //        (file) => to_directory(file)
+            //    );
+
+            //    Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
+
+            //    // ﾌｧｲﾙ内整形
+            //    target = Execute(target,
+            //        (file) => Directory.Exists(file),
+            //        (file) => process_start(Path.Combine(work, ArrangayPath), () => $"\"{file}\""),
+            //        (file) => file
+            //    );
+
+            //    Console.WriteLine($"* ﾌｧｲﾙ内の画像を縮小します");
+
+            //    // 縮小専用
+            //    target = Execute(target,
+            //        (file) => isExeShukusen && Directory.Exists(file),
+            //        (file) => shukusen_start(file),
+            //        (file) => file
+            //    );
+
+            //    Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
+
+            //    // ﾌｧｲﾙ内整形
+            //    target = Execute(target,
+            //        (file) => Directory.Exists(file),
+            //        (file) => process_start(Path.Combine(work, ArrangayPath), () => $"\"{file}\""),
+            //        (file) => file
+            //    );
+
+            //    Console.WriteLine($"* 圧縮処理を開始します");
+
+            //    // ﾌｫﾙﾀﾞ→圧縮ﾌｧｲﾙ
+            //    target = Execute(target,
+            //        (file) => Directory.Exists(file),
+            //        (file) => process_start(@"7za.exe", () => $"a -mmt=on -y -r \"{file}.zip\"  \"{file}\""),
+            //        (file) => file
+            //    );
+
+            //    Console.WriteLine($"* 解凍したﾌｫﾙﾀﾞを削除します");
+
+            //    // 解凍したﾌｫﾙﾀﾞを削除
+            //    target = Execute(target,
+            //        (file) => Directory.Exists(file),
+            //        (file) => DeleteDirectory(file),
+            //        (file) => file
+            //    );
+
+            //}
+        }
+
+        /// <summary>
+        /// 入力されたｵﾌﾟｼｮﾝの判定を行います。
+        /// </summary>
+        /// <param name="o">Console.ReadLine</param>
+        /// <param name="isExeShukusen">縮小専用を実行するかどうか(参照)</param>
+        /// <returns>true: OK / false: NG</returns>
+        private static bool CheckOptions(string o, ref bool isExeShukusen)
+        {
+            switch (o)
+            {
+                case "":
+                case "0":
+                    // 全て実行する
+                    // (空文字ならﾃﾞﾌｫﾙﾄ)
+                    isExeShukusen = true;
+                    return true;
+                case "1":
+                    // 画像縮小をｽｷｯﾌﾟする。
+                    isExeShukusen = false;
+                    return true;
+                default:
+                    // ｴﾗｰ
+                    Console.WriteLine("認識できないｵﾌﾟｼｮﾝが指定されたのでｱﾌﾟﾘｹｰｼｮﾝを終了します。");
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// 実行ﾊﾟﾗﾒｰﾀに対して処理を実行します。
+        /// </summary>
+        /// <param name="work">作業ﾃﾞｨﾚｸﾄﾘ</param>
+        /// <param name="target">処理対象ﾌｧｲﾙ(ﾌｫﾙﾀﾞ)</param>
+        /// <param name="isExeShukusen">縮小専用を実行するかどうか</param>
+        private static void Execute(string work, string target, bool isExeShukusen)
+        {
+            Console.WriteLine($"* 解凍処理を開始します");
+
+            // ﾌｧｲﾙ名→ﾌｫﾙﾀﾞ名変更ﾃﾞﾘｹﾞｰﾄ
+            Func<string, string> to_directory = (file) => 
+                Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file).Trim(' ', '　', '.'));
+
+            //// ﾌﾟﾛｾｽ実行ﾃﾞﾘｹﾞｰﾄ
+            //Action<string, string> process_start = (file, argument) =>
+            //{
+            //    Console.WriteLine($"work: {work}");
+            //    Console.WriteLine($"exe : {file}");
+            //    Console.WriteLine($"arg : {argument}");
+
+            //    var process = new ProcessStartInfo();
+
+            //    process.WorkingDirectory = work;
+            //    process.FileName = file;
+            //    process.Arguments = argument;
+            //    process.UseShellExecute = false;
+            //    process.CreateNoWindow = true;
+            //    process.ErrorDialog = true;
+            //    process.RedirectStandardError = true;
+
+            //    Process.Start(process).WaitForExit();
+            //};
+
+            //// 縮小専用を実行
+            //Action<string> shukusen_start = (directory) =>
+            //{
+            //    Directory.GetFiles(directory)
+            //        .AsParallel()
+            //        .ForAll(file =>
+            //        {
+            //                // 縮小専用を実行
+            //                process_start(Path.Combine(work, ShukusenPath), $"\"{file}\"");
+
+            //                // 元ﾌｧｲﾙ削除
+            //                File.Delete(file);
+            //        });
+            //};
+
+            // 圧縮ﾌｧｲﾙ→ﾌｫﾙﾀﾞ
+            target = Execute(target,
+                (file) => File.Exists(file),
+                (file) => StartProcess(work, SevenZaPath, $"x -y -r -aoa \"{file}\" -o\"{to_directory(file)}\""),
+                (file) => file
+            );
+
+            Console.WriteLine($"* 解凍したﾌｧｲﾙを削除します");
+            Console.WriteLine($"file: {target}");
+
+            // 元のﾌｧｲﾙを削除
+            target = Execute(target,
+                (file) => File.Exists(file),
+                (file) => File.Delete(file),
+                (file) => to_directory(file)
+            );
+
+            Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
+
+            // ﾌｧｲﾙ内整形
+            target = Execute(target,
+                (file) => Directory.Exists(file),
+                (file) => StartProcess(work, Path.Combine(work, ArrangayPath), $"\"{file}\""),
+                (file) => file
+            );
+
+            Console.WriteLine($"* ﾌｧｲﾙ内の画像を縮小します");
+
+            // 縮小専用
+            target = Execute(target,
+                (file) => isExeShukusen && Directory.Exists(file) && File.Exists(Path.Combine(work, ShukusenPath)),
+                (file) => StartShukusen(work, file),
+                (file) => file
+            );
+
+            Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
+
+            // ﾌｧｲﾙ内整形
+            target = Execute(target,
+                (file) => Directory.Exists(file),
+                (file) => StartProcess(work, Path.Combine(work, ArrangayPath), $"\"{file}\""),
+                (file) => file
+            );
+
+            Console.WriteLine($"* 圧縮処理を開始します");
+
+            // ﾌｫﾙﾀﾞ→圧縮ﾌｧｲﾙ
+            target = Execute(target,
+                (file) => Directory.Exists(file),
+                (file) => StartProcess(work, SevenZaPath, $"a -mmt=on -y -r \"{file}.zip\"  \"{file}\""),
+                (file) => file
+            );
+
+            Console.WriteLine($"* 解凍したﾌｫﾙﾀﾞを削除します");
+
+            // 解凍したﾌｫﾙﾀﾞを削除
+            target = Execute(target,
+                (file) => Directory.Exists(file),
+                (file) => DeleteDirectory(file),
+                (file) => file
+            );
+        }
+
+        /// <summary>
+        /// ﾌﾟﾛｾｽを実行します。
+        /// </summary>
+        /// <param name="work">作業ﾃﾞｨﾚｸﾄﾘ</param>
+        /// <param name="file">実行するﾌﾟﾛｾｽのﾊﾟｽ</param>
+        /// <param name="argument">ﾌﾟﾛｾｽに渡す実行引数</param>
+        private static void StartProcess(string work, string file, string argument)
+        {
+            Console.WriteLine($"work: {work}");
+            Console.WriteLine($"exe : {file}");
+            Console.WriteLine($"arg : {argument}");
+
+            var process = new ProcessStartInfo();
+
+            process.WorkingDirectory = work;
+            process.FileName = file;
+            process.Arguments = argument;
+            process.UseShellExecute = false;
+            process.CreateNoWindow = true;
+            process.ErrorDialog = true;
+            process.RedirectStandardError = true;
+
+            Process.Start(process).WaitForExit();
+        }
+
+        /// <summary>
+        /// 縮小専用を実行します。
+        /// </summary>
+        /// <param name="work">作業ﾃﾞｨﾚｸﾄﾘ</param>
+        /// <param name="directory">処理対象ﾃﾞｨﾚｸﾄﾘ</param>
+        private static void StartShukusen(string work, string directory)
+        {
+            Directory.GetFiles(directory)
+                .AsParallel()
+                .ForAll(file =>
+                {
+                    // 縮小専用を実行
+                    StartProcess(work, Path.Combine(work, ShukusenPath), $"\"{file}\"");
+
+                    // 元ﾌｧｲﾙ削除
+                    File.Delete(file);
+                });
         }
 
         /// <summary>
@@ -129,7 +345,7 @@ namespace ConsoleApp4
         /// <param name="target">対象ﾌｧｲﾙ(ﾌｫﾙﾀﾞ)</param>
         /// <param name="checker">処理を実行するか確認するﾃﾞﾘｹﾞｰﾄ</param>
         /// <param name="executer">処理を実行するﾃﾞﾘｹﾞｰﾄ</param>
-        /// <param name="resulter">次に実行するﾌｧｲﾙ(ﾌｫﾙﾀﾞ)</param>
+        /// <param name="resulter">次に実行するﾌｧｲﾙ(ﾌｫﾙﾀﾞ)を取得するﾃﾞﾘｹﾞｰﾄ</param>
         /// <returns></returns>
         private static string Execute(string target, Func<string, bool> checker, Action<string> executer, Func<string, string> resulter)
         {
@@ -171,12 +387,5 @@ namespace ConsoleApp4
                 .ForAll(child => DeleteAttributes(child));
         }
 
-        private void ShukuSen(string directory)
-        {
-            foreach (var file in Directory.GetFiles(directory))
-            {
-
-            }
-        }
     }
 }
