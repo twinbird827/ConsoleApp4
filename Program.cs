@@ -47,113 +47,6 @@ namespace ConsoleApp4
                 Console.ReadLine();
             }
 
-            //foreach (var arg in args)
-            //{
-            //    var target = arg;
-
-            //    Console.WriteLine($"* 解凍処理を開始します");
-
-            //    // ﾌｧｲﾙ名→ﾌｫﾙﾀﾞ名変更ﾃﾞﾘｹﾞｰﾄ
-            //    Func<string, string> to_directory = (file) => Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file).Trim(' ', '　', '.'));
-
-            //    // ﾌﾟﾛｾｽ実行ﾃﾞﾘｹﾞｰﾄ
-            //    Action<string, Func<string>> process_start = (file, argumenter) =>
-            //    {
-            //        Console.WriteLine($"work: {work}");
-            //        Console.WriteLine($"exe : {file}");
-            //        Console.WriteLine($"arg : {argumenter()}");
-
-            //        var process = new ProcessStartInfo();
-
-            //        process.WorkingDirectory = work;
-            //        process.FileName = file;
-            //        process.Arguments = argumenter();
-            //        process.UseShellExecute = false;
-            //        process.CreateNoWindow = true;
-            //        process.ErrorDialog = true;
-            //        process.RedirectStandardError = true;
-
-            //        Process.Start(process).WaitForExit();
-
-            //    };
-
-            //    // 縮小専用を実行
-            //    Action<string> shukusen_start = (directory) =>
-            //    {
-            //        Directory.GetFiles(directory)
-            //            .AsParallel()
-            //            .ForAll(file =>
-            //            {
-            //                // 縮小専用を実行
-            //                process_start(Path.Combine(work, ShukusenPath), () => $"\"{file}\"");
-
-            //                // 元ﾌｧｲﾙ削除
-            //                File.Delete(file);
-            //            });
-            //    };
-
-            //    // 圧縮ﾌｧｲﾙ→ﾌｫﾙﾀﾞ
-            //    target = Execute(target,
-            //        (file) => File.Exists(file),
-            //        (file) => process_start("7za.exe", () => $"x -y -r -aoa \"{file}\" -o\"{to_directory(file)}\""),
-            //        (file) => file
-            //    );
-
-            //    Console.WriteLine($"* 解凍したﾌｧｲﾙを削除します");
-
-            //    // 元のﾌｧｲﾙを削除
-            //    target = Execute(target,
-            //        (file) => File.Exists(file),
-            //        (file) => File.Delete(file),
-            //        (file) => to_directory(file)
-            //    );
-
-            //    Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
-
-            //    // ﾌｧｲﾙ内整形
-            //    target = Execute(target,
-            //        (file) => Directory.Exists(file),
-            //        (file) => process_start(Path.Combine(work, ArrangayPath), () => $"\"{file}\""),
-            //        (file) => file
-            //    );
-
-            //    Console.WriteLine($"* ﾌｧｲﾙ内の画像を縮小します");
-
-            //    // 縮小専用
-            //    target = Execute(target,
-            //        (file) => isExeShukusen && Directory.Exists(file),
-            //        (file) => shukusen_start(file),
-            //        (file) => file
-            //    );
-
-            //    Console.WriteLine($"* ﾌｧｲﾙ内を整形します");
-
-            //    // ﾌｧｲﾙ内整形
-            //    target = Execute(target,
-            //        (file) => Directory.Exists(file),
-            //        (file) => process_start(Path.Combine(work, ArrangayPath), () => $"\"{file}\""),
-            //        (file) => file
-            //    );
-
-            //    Console.WriteLine($"* 圧縮処理を開始します");
-
-            //    // ﾌｫﾙﾀﾞ→圧縮ﾌｧｲﾙ
-            //    target = Execute(target,
-            //        (file) => Directory.Exists(file),
-            //        (file) => process_start(@"7za.exe", () => $"a -mmt=on -y -r \"{file}.zip\"  \"{file}\""),
-            //        (file) => file
-            //    );
-
-            //    Console.WriteLine($"* 解凍したﾌｫﾙﾀﾞを削除します");
-
-            //    // 解凍したﾌｫﾙﾀﾞを削除
-            //    target = Execute(target,
-            //        (file) => Directory.Exists(file),
-            //        (file) => DeleteDirectory(file),
-            //        (file) => file
-            //    );
-
-            //}
         }
 
         /// <summary>
@@ -196,41 +89,6 @@ namespace ConsoleApp4
             // ﾌｧｲﾙ名→ﾌｫﾙﾀﾞ名変更ﾃﾞﾘｹﾞｰﾄ
             Func<string, string> to_directory = (file) => 
                 Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file).Trim(' ', '　', '.'));
-
-            //// ﾌﾟﾛｾｽ実行ﾃﾞﾘｹﾞｰﾄ
-            //Action<string, string> process_start = (file, argument) =>
-            //{
-            //    Console.WriteLine($"work: {work}");
-            //    Console.WriteLine($"exe : {file}");
-            //    Console.WriteLine($"arg : {argument}");
-
-            //    var process = new ProcessStartInfo();
-
-            //    process.WorkingDirectory = work;
-            //    process.FileName = file;
-            //    process.Arguments = argument;
-            //    process.UseShellExecute = false;
-            //    process.CreateNoWindow = true;
-            //    process.ErrorDialog = true;
-            //    process.RedirectStandardError = true;
-
-            //    Process.Start(process).WaitForExit();
-            //};
-
-            //// 縮小専用を実行
-            //Action<string> shukusen_start = (directory) =>
-            //{
-            //    Directory.GetFiles(directory)
-            //        .AsParallel()
-            //        .ForAll(file =>
-            //        {
-            //                // 縮小専用を実行
-            //                process_start(Path.Combine(work, ShukusenPath), $"\"{file}\"");
-
-            //                // 元ﾌｧｲﾙ削除
-            //                File.Delete(file);
-            //        });
-            //};
 
             // 圧縮ﾌｧｲﾙ→ﾌｫﾙﾀﾞ
             target = Execute(target,
@@ -329,13 +187,27 @@ namespace ConsoleApp4
         {
             Directory.GetFiles(directory)
                 .AsParallel()
-                .ForAll(file =>
+                .ForAll(src =>
                 {
                     // 縮小専用を実行
-                    StartProcess(work, Path.Combine(work, ShukusenPath), $"\"{file}\"");
+                    StartProcess(work, Path.Combine(work, ShukusenPath), $"\"{src}\"");
 
-                    // 元ﾌｧｲﾙ削除
-                    File.Delete(file);
+                    // 縮小後ﾌｧｲﾙ名を作成
+                    var dst = Path.Combine(
+                        Path.GetDirectoryName(src),
+                        $"s-{Path.GetFileNameWithoutExtension(src)}.jpg")
+                    ;
+
+                    if ((new FileInfo(dst)).Length == 0)
+                    {
+                        // 縮小が失敗していたなら縮小前のﾌｧｲﾙ名をﾘﾈｰﾑ
+                        File.Move(src, dst);
+                    }
+                    else
+                    {
+                        // 縮小が成功していたなら元ﾌｧｲﾙを削除
+                        File.Delete(src);
+                    }
                 });
         }
 
