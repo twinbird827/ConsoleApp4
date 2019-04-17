@@ -185,7 +185,7 @@ namespace ConsoleApp4
         /// <param name="directory">処理対象ﾃﾞｨﾚｸﾄﾘ</param>
         private static void StartShukusen(string work, string directory)
         {
-            foreach (var files in Chunk(Directory.GetFiles(directory)))
+            Chunk(Directory.GetFiles(directory)).AsParallel().ForAll(files =>
             {
                 var arg = string.Join(" ", files.Select(file => $"\"{file}\""));
 
@@ -216,31 +216,39 @@ namespace ConsoleApp4
                         File.Move(src, dst);
                     }
                 });
-            }
-            //Directory.GetFiles(directory)
-            //    .AsParallel()
-            //    .ForAll(src =>
-            //    {
-            //        // 縮小専用を実行
-            //        StartProcess(work, Path.Combine(work, ShukusenPath), $"\"{src}\"");
+            });
+            //foreach (var files in Chunk(Directory.GetFiles(directory)))
+            //{
+            //    var arg = string.Join(" ", files.Select(file => $"\"{file}\""));
 
+            //    // 縮小専用を実行
+            //    StartProcess(work, Path.Combine(work, ShukusenPath), arg);
+
+            //    files.AsParallel().ForAll(src =>
+            //    {
             //        // 縮小後ﾌｧｲﾙ名を作成
             //        var dst = Path.Combine(
             //            Path.GetDirectoryName(src),
-            //            $"s-{Path.GetFileNameWithoutExtension(src)}.jpg")
-            //        ;
+            //            $"s-{Path.GetFileNameWithoutExtension(src)}.jpg"
+            //        );
 
-            //        if ((new FileInfo(dst)).Length == 0)
+            //        var fi = new FileInfo(dst);
+
+            //        if (fi.Exists && fi.Length != 0)
             //        {
-            //            // 縮小が失敗していたなら縮小前のﾌｧｲﾙ名をﾘﾈｰﾑ
-            //            File.Move(src, dst);
+            //            // 縮小が成功していたら元ﾌｧｲﾙを削除
+            //            File.Delete(src);
             //        }
             //        else
             //        {
-            //            // 縮小が成功していたなら元ﾌｧｲﾙを削除
-            //            File.Delete(src);
+            //            // 縮小が失敗していて、且つ、縮小後ﾌｧｲﾙが残っていたら後ﾌｧｲﾙを削除
+            //            if (fi.Exists) fi.Delete();
+
+            //            // 縮小前のﾌｧｲﾙをﾘﾈｰﾑ
+            //            File.Move(src, dst);
             //        }
             //    });
+            //}
         }
 
         /// <summary>
