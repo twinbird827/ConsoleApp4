@@ -87,7 +87,7 @@ namespace ConsoleApp4
             Console.WriteLine($"* 解凍処理を開始します");
 
             // ﾌｧｲﾙ名→ﾌｫﾙﾀﾞ名変更ﾃﾞﾘｹﾞｰﾄ
-            Func<string, string> to_directory = (file) => 
+            Func<string, string> to_directory = (file) =>
                 Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file).Trim(' ', '　', '.'));
 
             // 圧縮ﾌｧｲﾙ→ﾌｫﾙﾀﾞ
@@ -185,7 +185,7 @@ namespace ConsoleApp4
         /// <param name="directory">処理対象ﾃﾞｨﾚｸﾄﾘ</param>
         private static void StartShukusen(string work, string directory)
         {
-            Chunk(Directory.GetFiles(directory)).AsParallel().ForAll(files =>
+            foreach (var files in Chunk(Directory.GetFiles(directory)))
             {
                 var arg = string.Join(" ", files.Select(file => $"\"{file}\""));
 
@@ -216,39 +216,31 @@ namespace ConsoleApp4
                         File.Move(src, dst);
                     }
                 });
-            });
-            //foreach (var files in Chunk(Directory.GetFiles(directory)))
-            //{
-            //    var arg = string.Join(" ", files.Select(file => $"\"{file}\""));
-
-            //    // 縮小専用を実行
-            //    StartProcess(work, Path.Combine(work, ShukusenPath), arg);
-
-            //    files.AsParallel().ForAll(src =>
+            }
+            //Directory.GetFiles(directory)
+            //    .AsParallel()
+            //    .ForAll(src =>
             //    {
+            //        // 縮小専用を実行
+            //        StartProcess(work, Path.Combine(work, ShukusenPath), $"\"{src}\"");
+
             //        // 縮小後ﾌｧｲﾙ名を作成
             //        var dst = Path.Combine(
             //            Path.GetDirectoryName(src),
-            //            $"s-{Path.GetFileNameWithoutExtension(src)}.jpg"
-            //        );
+            //            $"s-{Path.GetFileNameWithoutExtension(src)}.jpg")
+            //        ;
 
-            //        var fi = new FileInfo(dst);
-
-            //        if (fi.Exists && fi.Length != 0)
+            //        if ((new FileInfo(dst)).Length == 0)
             //        {
-            //            // 縮小が成功していたら元ﾌｧｲﾙを削除
-            //            File.Delete(src);
+            //            // 縮小が失敗していたなら縮小前のﾌｧｲﾙ名をﾘﾈｰﾑ
+            //            File.Move(src, dst);
             //        }
             //        else
             //        {
-            //            // 縮小が失敗していて、且つ、縮小後ﾌｧｲﾙが残っていたら後ﾌｧｲﾙを削除
-            //            if (fi.Exists) fi.Delete();
-
-            //            // 縮小前のﾌｧｲﾙをﾘﾈｰﾑ
-            //            File.Move(src, dst);
+            //            // 縮小が成功していたなら元ﾌｧｲﾙを削除
+            //            File.Delete(src);
             //        }
             //    });
-            //}
         }
 
         /// <summary>
